@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cstdlib>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
@@ -15,6 +17,8 @@ GLfloat translationX = 0.0f;
 GLfloat translationY = 0.0f;
 GLfloat scaleFactor = 1.0f;
 
+int texWidth, texHeight, nrChannels;
+
 int main( void )
 {
     GLFWwindow *window;
@@ -26,7 +30,7 @@ int main( void )
     }
     
     // Crear la ventana
-    window = glfwCreateWindow( SCREEN_WIDTH, SCREEN_HEIGHT, "Hello World", NULL, NULL );
+    window = glfwCreateWindow( SCREEN_WIDTH, SCREEN_HEIGHT, "Dust2 A Site", NULL, NULL );
     
     // Declarar que se recibirán comando del teclado
     glfwSetKeyCallback( window, keyCallback );
@@ -51,13 +55,14 @@ int main( void )
     glViewport( 0.0f, 0.0f, screenWidth, screenHeight ); // Específica en que parte de la ventana se dibujaran los elementos
     glMatrixMode(GL_PROJECTION_MATRIX); // Se crea la matriz de proyección
     glLoadIdentity( ); // Se crea de la matriz identidad
-    glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, 0, 1000 ); // Establecer el sistema de coordenadas
+    glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, 0, 2000 ); // Establecer el sistema de coordenadas
     glMatrixMode(GL_MODELVIEW_MATRIX); // Matriz de transformación
     
 
     // Se establece el sistema de coordenadas dentro de la ventana
     GLfloat halfScreenWidth = SCREEN_WIDTH / 2;
-    GLfloat halfScreenHeight = SCREEN_HEIGHT / 2;
+    GLfloat halfScreenHeight = SCREEN_HEIGHT / 2 - 100;
+    GLfloat startingZPos = -500;
     
     
     // Loop en donde se estará dibujando la ventana
@@ -78,13 +83,19 @@ int main( void )
         //cubo
         GLfloat boxSize = 175;
         GLfloat edgeHeight = 30;
-        GLfloat edgeLength = 800;
-        DrawCube( halfScreenWidth, halfScreenHeight, -500, 800, 400, 800 ); //site
-        DrawCube( halfScreenWidth, halfScreenHeight+200+edgeHeight/2, -115, edgeLength, edgeHeight, edgeHeight ); //orilla del site
-        DrawCube( halfScreenWidth+385, halfScreenHeight+200+edgeHeight/2, -515, edgeHeight, edgeHeight, edgeLength-edgeHeight ); //orilla del site
-        DrawCube( halfScreenWidth-385, halfScreenHeight+200+edgeHeight/2, -515, edgeHeight, edgeHeight, edgeLength-edgeHeight ); //orilla del site
+        GLfloat siteLength = 800;
+        
+        DrawCube( halfScreenWidth, halfScreenHeight, -500, siteLength, 400, siteLength ); // site
+        DrawCube( halfScreenWidth+siteLength/2, halfScreenHeight, -500-siteLength, 1600, 400, 800 ); // atras
+        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight, -700, 1000, 400, 800 ); // short
 
-        DrawCube( halfScreenWidth+200, halfScreenHeight+200+boxSize/2, -700, boxSize, boxSize, boxSize ); //caja por goose
+        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight+200+edgeHeight/2, -315, 1000, edgeHeight, edgeHeight ); //orilla de short frente
+
+        DrawCube( halfScreenWidth, halfScreenHeight+200+edgeHeight/2, -115, siteLength, edgeHeight, edgeHeight ); //orilla de site frente
+        DrawCube( halfScreenWidth+385, halfScreenHeight+200+edgeHeight/2, -515, edgeHeight, edgeHeight, siteLength-edgeHeight ); //orilla de site derecha
+        DrawCube( halfScreenWidth-385, halfScreenHeight+200+edgeHeight/2, -230, edgeHeight, edgeHeight, 200 ); //orilla de site izquierda
+
+        DrawCube( halfScreenWidth+200, halfScreenHeight+200+boxSize/2, -700, boxSize, boxSize, boxSize ); //caja atras
         DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220, boxSize, boxSize, boxSize ); //stack de cajas (abajo)
         DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize*1.5, -220, boxSize, boxSize, boxSize ); //stack de cajas (arriba)
         DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220-boxSize, boxSize, boxSize, boxSize ); //caja a un ladito
@@ -198,7 +209,7 @@ void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
         0, 0, 0,   0, 1, 0,   1, 1, 0,   1, 0, 0,
         0, 0, 1,   0, 1, 1,   1, 1, 1,   1, 0, 1
     };
-
+    
     glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
     glDepthMask(GL_TRUE);//Agregar la proyección de profundidad
     glEnableClientState( GL_VERTEX_ARRAY );
