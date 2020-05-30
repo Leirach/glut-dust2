@@ -10,12 +10,17 @@
 
 void keyCallback( GLFWwindow *window, int key, int scancode, int action, int mods );
 void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length);
+void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length);
+void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, char plane);
+
 
 GLfloat rotationX = 0.0f;
 GLfloat rotationY = 0.0f;
 GLfloat translationX = 0.0f;
 GLfloat translationY = 0.0f;
 GLfloat scaleFactor = 1.0f;
+
+int texWidth, texHeight, nrChannels;
 
 int main( void )
 {
@@ -28,7 +33,7 @@ int main( void )
     }
     
     // Crear la ventana
-    window = glfwCreateWindow( SCREEN_WIDTH, SCREEN_HEIGHT, "Hello World", NULL, NULL );
+    window = glfwCreateWindow( SCREEN_WIDTH, SCREEN_HEIGHT, "Dust2 A Site", NULL, NULL );
     
     // Declarar que se recibirán comando del teclado
     glfwSetKeyCallback( window, keyCallback );
@@ -53,13 +58,14 @@ int main( void )
     glViewport( 0.0f, 0.0f, screenWidth, screenHeight ); // Específica en que parte de la ventana se dibujaran los elementos
     glMatrixMode(GL_PROJECTION_MATRIX); // Se crea la matriz de proyección
     glLoadIdentity( ); // Se crea de la matriz identidad
-    glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, 0, 1000 ); // Establecer el sistema de coordenadas
+    glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, 0, 2000 ); // Establecer el sistema de coordenadas
     glMatrixMode(GL_MODELVIEW_MATRIX); // Matriz de transformación
     
 
     // Se establece el sistema de coordenadas dentro de la ventana
     GLfloat halfScreenWidth = SCREEN_WIDTH / 2;
-    GLfloat halfScreenHeight = SCREEN_HEIGHT / 2;
+    GLfloat halfScreenHeight = SCREEN_HEIGHT / 2 - 100;
+    GLfloat startingZPos = -500;
     
     
     // Loop en donde se estará dibujando la ventana
@@ -80,8 +86,11 @@ int main( void )
         //cubo
         GLfloat boxSize = 175;
         GLfloat edgeHeight = 30;
-        GLfloat edgeLength = 800;
-        DrawCube( halfScreenWidth, halfScreenHeight, -500, 800, 400, 800 ); //site
+        GLfloat siteLength = 800;
+        
+        DrawWall(halfScreenWidth, halfScreenHeight, -500, 100, 100, 'z');
+        DrawWall(halfScreenWidth, halfScreenHeight, -500, 100, 100, 'x');
+        DrawWall(halfScreenWidth, halfScreenHeight, -500, 100, 100, 'y');
         
         glPopMatrix();
         glfwSwapBuffers( window );
@@ -137,48 +146,43 @@ void keyCallback( GLFWwindow *window, int key, int scancode, int action, int mod
     }
 }
 
-
-void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length)
+void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, char plane)
 {
-    GLfloat xOffset = width * 0.5f;
-    GLfloat yOffset = height * 0.5f;
-    GLfloat zOffset = length * 0.5f;
+    GLfloat wOffset = width * 0.5f;
+    GLfloat hOffset = height * 0.5f;
+    GLfloat wall[12];
 
-    float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-    -0.5f, 0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f,
-    0.5f, 0.5f, 0.0f
+    if (plane == 'x') {
+        wall[0] = centerPosX; wall[1] = centerPosY + hOffset; wall[2] = centerPosZ - wOffset;
+        wall[3] = centerPosX; wall[4] = centerPosY + hOffset; wall[5] = centerPosZ + wOffset;
+        wall[6] = centerPosX; wall[7] = centerPosY - hOffset; wall[8] = centerPosZ + wOffset;
+        wall[9] = centerPosX; wall[10] = centerPosY - hOffset; wall[11] = centerPosZ - wOffset;
+    }
+    else if (plane == 'y') {
+        wall[0] = centerPosX + hOffset; wall[1] = centerPosY; wall[2] = centerPosZ - wOffset;
+        wall[3] = centerPosX + hOffset; wall[4] = centerPosY; wall[5] = centerPosZ + wOffset;
+        wall[6] = centerPosX - hOffset; wall[7] = centerPosY; wall[8] = centerPosZ + wOffset;
+        wall[9] = centerPosX - hOffset; wall[10] = centerPosY; wall[11] = centerPosZ - wOffset;
+    }
+    else {
+        wall[0] = centerPosX - wOffset; wall[1] = centerPosY + hOffset; wall[2] = centerPosZ;
+        wall[3] = centerPosX + wOffset; wall[4] = centerPosY + hOffset; wall[5] = centerPosZ;
+        wall[6] = centerPosX + wOffset; wall[7] = centerPosY - hOffset; wall[8] = centerPosZ;
+        wall[9] = centerPosX - wOffset; wall[10] = centerPosY - hOffset; wall[11] = centerPosZ;
+    }
 
-};
-
-    float texcoords[] = {
-        0.0f, 1.0f,
-        0.0f, 0.0f,
-        1.0, 0.0,
-        1.0, 1.0,
+    GLfloat colors[] =
+    {
+        0, 0, 0,   0, 0, 1,   0, 1, 1,   0, 1, 0,
     };
-
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    int texWidth, texHeight, nrChannels;
-    unsigned char *data = stbi_load("container.jpg", &texWidth, &texHeight, &nrChannels, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-
+    
     glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
     glDepthMask(GL_TRUE);//Agregar la proyección de profundidad
     glEnableClientState( GL_VERTEX_ARRAY );
-    glVertexPointer( 3, GL_FLOAT, 0, vertices );
-    glDrawArrays( GL_QUADS, 0, 24 );
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glVertexPointer( 3, GL_FLOAT, 0, vertices );
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer( 3, GL_FLOAT, 0, wall );
+    glColorPointer(3, GL_FLOAT, 0, colors); //Buffer de color
+    glDrawArrays( GL_QUADS, 0, 4 );
     glDisableClientState( GL_VERTEX_ARRAY );
-    glDisableClientState( GL_VERTEX_ARRAY );
-    
+    glDisableClientState(GL_COLOR_ARRAY);
 }

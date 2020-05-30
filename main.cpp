@@ -10,11 +10,13 @@
 
 void keyCallback( GLFWwindow *window, int key, int scancode, int action, int mods );
 void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length);
+void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length);
+void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, char plane);
 
 GLfloat rotationX = 0.0f;
 GLfloat rotationY = 0.0f;
 GLfloat translationX = 0.0f;
-GLfloat translationY = 0.0f;
+GLfloat translationZ = 0.0f;
 GLfloat scaleFactor = 1.0f;
 
 int texWidth, texHeight, nrChannels;
@@ -22,32 +24,28 @@ int texWidth, texHeight, nrChannels;
 int main( void )
 {
     GLFWwindow *window;
-    
+
     // Inicializar la librería
     if ( !glfwInit( ) )
     {
         return -1;
     }
-    
+
     // Crear la ventana
     window = glfwCreateWindow( SCREEN_WIDTH, SCREEN_HEIGHT, "Dust2 A Site", NULL, NULL );
-    
+
     // Declarar que se recibirán comando del teclado
     glfwSetKeyCallback( window, keyCallback );
     glfwSetInputMode( window, GLFW_STICKY_KEYS, 1 );
-    
-    
-    
+
     int screenWidth, screenHeight;
     glfwGetFramebufferSize( window, &screenWidth, &screenHeight );
 
-    
     if ( !window )
     {
         glfwTerminate( );
         return -1;
     }
-    
     
     // Se crea el contexto de la ventana
     glfwMakeContextCurrent( window );
@@ -55,7 +53,7 @@ int main( void )
     glViewport( 0.0f, 0.0f, screenWidth, screenHeight ); // Específica en que parte de la ventana se dibujaran los elementos
     glMatrixMode(GL_PROJECTION_MATRIX); // Se crea la matriz de proyección
     glLoadIdentity( ); // Se crea de la matriz identidad
-    glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, 0, 2000 ); // Establecer el sistema de coordenadas
+    glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, -2000, 2000 ); // Establecer el sistema de coordenadas
     glMatrixMode(GL_MODELVIEW_MATRIX); // Matriz de transformación
     
 
@@ -74,7 +72,7 @@ int main( void )
         // Render (Se crea el cubo y se generan los cambios en los vectores de transformación)
         glPushMatrix();
         glTranslatef( halfScreenWidth, halfScreenHeight, -500 ); // Coloca el cubo al centro de la pantalla
-        glTranslated(translationX, translationY,0); // Mueve el cubo con las variables de las teclas (Vector de Traslación
+        glTranslated(translationX, 0, translationZ); // Mueve el cubo con las variables de las teclas (Vector de Traslación
         glRotatef( rotationX, 1, 0, 0 ); // Rotar el cubo en X
         glRotatef( rotationY, 0, 1, 0 ); // Rotar el cubo en Y
         glScalef(scaleFactor, scaleFactor, scaleFactor);
@@ -88,6 +86,8 @@ int main( void )
         DrawCube( halfScreenWidth, halfScreenHeight, -500, siteLength, 400, siteLength ); // site
         DrawCube( halfScreenWidth+siteLength/2, halfScreenHeight, -500-siteLength, 1600, 400, 800 ); // atras
         DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight, -700, 1000, 400, 800 ); // short
+
+        DrawRamp(halfScreenWidth+siteLength, halfScreenHeight, -500, siteLength, 400, siteLength);
 
         DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight+200+edgeHeight/2, -315, 1000, edgeHeight, edgeHeight ); //orilla de short frente
 
@@ -139,10 +139,10 @@ void keyCallback( GLFWwindow *window, int key, int scancode, int action, int mod
                 translationX += 10;
                 break;
             case GLFW_KEY_W:
-                translationY += 10;
+                translationZ += 10;
                 break;
             case GLFW_KEY_S:
-                translationY -=10;
+                translationZ -=10;
                 break;
             case GLFW_KEY_X:
                 scaleFactor += 0.1;
@@ -217,6 +217,112 @@ void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
     glVertexPointer( 3, GL_FLOAT, 0, vertices );
     glColorPointer(3, GL_FLOAT, 0, colors); //Buffer de color
     glDrawArrays( GL_QUADS, 0, 24 );
+    glDisableClientState( GL_VERTEX_ARRAY );
+    glDisableClientState(GL_COLOR_ARRAY);
+}
+
+void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length)
+{
+    GLfloat xOffset = width * 0.5f;
+    GLfloat yOffset = height * 0.5f;
+    GLfloat zOffset = length * 0.5f;
+
+    GLfloat quads[] =
+    {
+        // Cara Tracera
+        centerPosX - xOffset, centerPosY + yOffset, centerPosZ - zOffset, // Arriba Izquierda
+        centerPosX + xOffset, centerPosY + yOffset, centerPosZ - zOffset, // Arriba Derecha
+        centerPosX + xOffset, centerPosY - yOffset, centerPosZ - zOffset, // Abajo Derecha
+        centerPosX - xOffset, centerPosY - yOffset, centerPosZ - zOffset, // Abajo Izquierda
+        
+        // Cara Superior
+        centerPosX - xOffset, centerPosY - yOffset, centerPosZ + zOffset, // Arriba Izquierda
+        centerPosX - xOffset, centerPosY + yOffset, centerPosZ - zOffset, // Arriba Derecha
+        centerPosX + xOffset, centerPosY + yOffset, centerPosZ - zOffset, // Abajo Derecha
+        centerPosX + xOffset, centerPosY - yOffset, centerPosZ + zOffset, // Abajo Izquierda
+        
+        // Cara Inferior
+        centerPosX - xOffset, centerPosY - yOffset, centerPosZ + zOffset, // Arriba Izquierda
+        centerPosX - xOffset, centerPosY - yOffset, centerPosZ - zOffset, // Arriba Derecha
+        centerPosX + xOffset, centerPosY - yOffset, centerPosZ - zOffset, // Abajo Derecha
+        centerPosX + xOffset, centerPosY - yOffset, centerPosZ + zOffset  // Abajo Izquierda
+    };
+
+    GLfloat leftSide[] = {
+         // Cara Izquierda
+        centerPosX - xOffset, centerPosY + yOffset, centerPosZ - zOffset, // Arriba Dereccha
+        centerPosX - xOffset, centerPosY - yOffset, centerPosZ - zOffset, // Abajo Derecha
+        centerPosX - xOffset, centerPosY - yOffset, centerPosZ + zOffset, // Abajo Izquierda
+        
+        // Cara Derecha
+        centerPosX + xOffset, centerPosY + yOffset, centerPosZ - zOffset, // Arriba Derecha
+        centerPosX + xOffset, centerPosY - yOffset, centerPosZ - zOffset, // Abajo Derecha
+        centerPosX + xOffset, centerPosY - yOffset, centerPosZ + zOffset, // Abajo Izquierda
+    };
+
+    GLfloat quadColors[] =
+    {
+        0, 0, 0,   0, 0, 1,   0, 1, 1,   0, 1, 0,
+        1, 0, 0,   1, 0, 1,   1, 1, 1,   1, 1, 0,
+        0, 0, 0,   0, 0, 1,   1, 0, 1,   1, 0, 0,
+    };
+
+    GLfloat triangleColors[] = {
+        0, 0, 0,   0, 0, 1,   1, 0, 1,
+        1, 0, 0,   0, 1, 0,   0, 1, 1,
+    };
+    
+    glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
+    glDepthMask(GL_TRUE);//Agregar la proyección de profundidad
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer( 3, GL_FLOAT, 0, quads );
+    glColorPointer(3, GL_FLOAT, 0, quadColors ); //Buffer de color
+    glDrawArrays( GL_QUADS, 0, 12 );
+    glVertexPointer( 3, GL_FLOAT, 0, leftSide );
+    glColorPointer(3, GL_FLOAT, 0, triangleColors ); //Buffer de color
+    glDrawArrays( GL_TRIANGLES, 0, 6 );
+    glDisableClientState( GL_VERTEX_ARRAY );
+    glDisableClientState(GL_COLOR_ARRAY);
+}
+
+void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, char plane)
+{
+    GLfloat wOffset = width * 0.5f;
+    GLfloat hOffset = height * 0.5f;
+    GLfloat wall[12];
+
+    if (plane == 'x') {
+        wall[0] = centerPosX; wall[1] = centerPosY + hOffset; wall[2] = centerPosZ - wOffset;
+        wall[3] = centerPosX; wall[4] = centerPosY + hOffset; wall[5] = centerPosZ + wOffset;
+        wall[6] = centerPosX; wall[7] = centerPosY - hOffset; wall[8] = centerPosZ + wOffset;
+        wall[9] = centerPosX; wall[10] = centerPosY - hOffset; wall[11] = centerPosZ - wOffset;
+    }
+    else if (plane == 'y') {
+        wall[0] = centerPosX + hOffset; wall[1] = centerPosY; wall[2] = centerPosZ - wOffset;
+        wall[3] = centerPosX + hOffset; wall[4] = centerPosY; wall[5] = centerPosZ + wOffset;
+        wall[6] = centerPosX - hOffset; wall[7] = centerPosY; wall[8] = centerPosZ + wOffset;
+        wall[9] = centerPosX - hOffset; wall[10] = centerPosY; wall[11] = centerPosZ - wOffset;
+    }
+    else {
+        wall[0] = centerPosX - wOffset; wall[1] = centerPosY + hOffset; wall[2] = centerPosZ;
+        wall[3] = centerPosX + wOffset; wall[4] = centerPosY + hOffset; wall[5] = centerPosZ;
+        wall[6] = centerPosX + wOffset; wall[7] = centerPosY - hOffset; wall[8] = centerPosZ;
+        wall[9] = centerPosX - wOffset; wall[10] = centerPosY - hOffset; wall[11] = centerPosZ;
+    }
+
+    GLfloat colors[] =
+    {
+        0, 0, 0,   0, 0, 1,   0, 1, 1,   0, 1, 0,
+    };
+    
+    glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
+    glDepthMask(GL_TRUE);//Agregar la proyección de profundidad
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer( 3, GL_FLOAT, 0, wall );
+    glColorPointer(3, GL_FLOAT, 0, colors); //Buffer de color
+    glDrawArrays( GL_QUADS, 0, 4 );
     glDisableClientState( GL_VERTEX_ARRAY );
     glDisableClientState(GL_COLOR_ARRAY);
 }
