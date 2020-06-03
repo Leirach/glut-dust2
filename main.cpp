@@ -9,7 +9,7 @@
 #define SCREEN_HEIGHT 768
 
 void keyCallback( GLFWwindow *window, int key, int scancode, int action, int mods );
-void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length);
+void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length, GLfloat color[]);
 void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length);
 void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, char plane);
 
@@ -18,6 +18,26 @@ GLfloat rotationY = 0.0f;
 GLfloat translationX = 0.0f;
 GLfloat translationZ = 0.0f;
 GLfloat scaleFactor = 1.0f;
+
+GLfloat mapColors[] =
+{
+    0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.0, 0.0, 0.0,   0.18, 0.09, 0.0,
+    0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.18, 0.09, 0.0,
+    0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.18, 0.09, 0.0,
+    0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.0, 0.00, 0.0,
+    0.71, 0.39, 0.11,   0.81, 0.59, 0.31,   0.71, 0.39, 0.11,   0.71, 0.39, 0.11,
+    0, 0, 0,   0, 0, 0,   0, 0, 0,   0, 0, 0
+};
+
+GLfloat boxColors[] =
+{
+    0.51, 0.6, 0.51,   0.51, 0.6, 0.51,   0.0, 0.0, 0.0,   0.11, 0.15, 0.11,
+    0.51, 0.6, 0.51,   0.51, 0.6, 0.51,   0.11, 0.15, 0.11,   0.11, 0.15, 0.11,
+    0.51, 0.6, 0.51,   0.51, 0.6, 0.51,   0.11, 0.15, 0.11,   0.11, 0.15, 0.11,
+    0.51, 0.6, 0.51,   0.51, 0.6, 0.51,   0.11, 0.15, 0.11,   0.0, 0.00, 0.0,
+    0.51, 0.6, 0.51,   0.61, 0.65, 0.61,   0.51, 0.6, 0.51,   0.51, 0.6, 0.51,
+    0, 0, 0,   0, 0, 0,   0, 0, 0,   0, 0, 0
+};
 
 int texWidth, texHeight, nrChannels;
 
@@ -83,22 +103,22 @@ int main( void )
         GLfloat edgeHeight = 30;
         GLfloat siteLength = 800;
         
-        DrawCube( halfScreenWidth, halfScreenHeight, -500, siteLength, 400, siteLength ); // site
-        DrawCube( halfScreenWidth+siteLength/2, halfScreenHeight, -500-siteLength, 1600, 400, 800 ); // atras
-        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight, -700, 1000, 400, 800 ); // short
+        DrawCube( halfScreenWidth, halfScreenHeight, -500, siteLength, 400, siteLength, mapColors ); // site
+        DrawCube( halfScreenWidth+siteLength/2, halfScreenHeight, -500-siteLength, 1600, 400, 800, mapColors ); // atras
+        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight, -700, 1000, 400, 800, mapColors ); // short
 
         DrawRamp(halfScreenWidth+siteLength, halfScreenHeight, -500, siteLength, 400, siteLength);
 
-        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight+200+edgeHeight/2, -315, 1000, edgeHeight, edgeHeight ); //orilla de short frente
+        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight+200+edgeHeight/2, -315, 1000, edgeHeight, edgeHeight, mapColors ); //orilla de short frente
 
-        DrawCube( halfScreenWidth, halfScreenHeight+200+edgeHeight/2, -115, siteLength, edgeHeight, edgeHeight ); //orilla de site frente
-        DrawCube( halfScreenWidth+385, halfScreenHeight+200+edgeHeight/2, -515, edgeHeight, edgeHeight, siteLength-edgeHeight ); //orilla de site derecha
-        DrawCube( halfScreenWidth-385, halfScreenHeight+200+edgeHeight/2, -230, edgeHeight, edgeHeight, 200 ); //orilla de site izquierda
+        DrawCube( halfScreenWidth, halfScreenHeight+200+edgeHeight/2, -115, siteLength, edgeHeight, edgeHeight, mapColors ); //orilla de site frente
+        DrawCube( halfScreenWidth+385, halfScreenHeight+200+edgeHeight/2, -515, edgeHeight, edgeHeight, siteLength-edgeHeight, mapColors ); //orilla de site derecha
+        DrawCube( halfScreenWidth-385, halfScreenHeight+200+edgeHeight/2, -230, edgeHeight, edgeHeight, 200, mapColors ); //orilla de site izquierda
 
-        DrawCube( halfScreenWidth+200, halfScreenHeight+200+boxSize/2, -700, boxSize, boxSize, boxSize ); //caja atras
-        DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220, boxSize, boxSize, boxSize ); //stack de cajas (abajo)
-        DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize*1.5, -220, boxSize, boxSize, boxSize ); //stack de cajas (arriba)
-        DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220-boxSize, boxSize, boxSize, boxSize ); //caja a un ladito
+        DrawCube( halfScreenWidth+200, halfScreenHeight+200+boxSize/2, -700, boxSize, boxSize, boxSize, boxColors ); //caja atras
+        DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220, boxSize, boxSize, boxSize, boxColors ); //stack de cajas (abajo)
+        DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize*1.5, -220, boxSize, boxSize, boxSize, boxColors ); //stack de cajas (arriba)
+        DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220-boxSize, boxSize, boxSize, boxSize, boxColors ); //caja a un ladito
         
         glPopMatrix();
         glfwSwapBuffers( window );
@@ -155,7 +175,7 @@ void keyCallback( GLFWwindow *window, int key, int scancode, int action, int mod
 }
 
 
-void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length)
+void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length, GLfloat colors[])
 {
     GLfloat xOffset = width * 0.5f;
     GLfloat yOffset = height * 0.5f;
@@ -200,6 +220,7 @@ void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
         centerPosX + xOffset, centerPosY - yOffset, centerPosZ + zOffset  // Abajo Izquierda
     };
 
+    /*
     GLfloat colors[] =
     {
         0, 0, 0,   0, 0, 1,   0, 1, 1,   0, 1, 0,
@@ -209,6 +230,18 @@ void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
         0, 0, 0,   0, 1, 0,   1, 1, 0,   1, 0, 0,
         0, 0, 1,   0, 1, 1,   1, 1, 1,   1, 0, 1
     };
+    */
+   /*
+    GLfloat colors[] =
+    {
+        0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.0, 0.0, 0.0,   0.18, 0.09, 0.0,
+        0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.18, 0.09, 0.0,
+        0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.18, 0.09, 0.0,
+        0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.0, 0.00, 0.0,
+        0.71, 0.39, 0.11,   0.81, 0.59, 0.31,   0.71, 0.39, 0.11,   0.71, 0.39, 0.11,
+        0, 0, 0,   0, 0, 0,   0, 0, 0,   0, 0, 0
+    };
+    */
     
     glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
     glDepthMask(GL_TRUE);//Agregar la proyección de profundidad
@@ -263,13 +296,13 @@ void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
     GLfloat quadColors[] =
     {
         0, 0, 0,   0, 0, 1,   0, 1, 1,   0, 1, 0,
-        1, 0, 0,   1, 0, 1,   1, 1, 1,   1, 1, 0,
-        0, 0, 0,   0, 0, 1,   1, 0, 1,   1, 0, 0,
+        0.71, 0.39, 0.11,   0.81, 0.59, 0.31,   0.71, 0.39, 0.11,   0.71, 0.39, 0.11,
+        0, 0, 0,   0, 0, 0,   0, 0, 0,   0, 0, 0,
     };
 
     GLfloat triangleColors[] = {
-        0, 0, 0,   0, 0, 1,   1, 0, 1,
-        1, 0, 0,   0, 1, 0,   0, 1, 1,
+        0.71, 0.39, 0.11,   0.0, 0.00, 0.0,   0.71, 0.39, 0.11,
+        0.71, 0.39, 0.11,   0.0, 0.00, 0.0,   0.61, 0.29, 0.01,
     };
     
     glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
