@@ -13,11 +13,11 @@ void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
 void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length);
 void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, char plane);
 
-GLfloat rotationX = 0.0f;
-GLfloat rotationY = 0.0f;
+GLfloat rotationX = 20.0f;
+GLfloat rotationY = -30.0f;
 GLfloat translationX = 0.0f;
 GLfloat translationZ = 0.0f;
-GLfloat scaleFactor = 1.0f;
+GLfloat scaleFactor = 0.8f;
 
 GLfloat mapColors[] =
 {
@@ -38,8 +38,6 @@ GLfloat boxColors[] =
     0.51, 0.6, 0.51,   0.61, 0.65, 0.61,   0.51, 0.6, 0.51,   0.51, 0.6, 0.51,
     0, 0, 0,   0, 0, 0,   0, 0, 0,   0, 0, 0
 };
-
-int texWidth, texHeight, nrChannels;
 
 int main( void )
 {
@@ -98,29 +96,45 @@ int main( void )
         glScalef(scaleFactor, scaleFactor, scaleFactor);
         glTranslatef( -halfScreenWidth, -halfScreenHeight, 500 );
 
-        //cubo
+        //tamaños
         GLfloat boxSize = 175;
         GLfloat edgeHeight = 30;
         GLfloat siteLength = 800;
-        
+        // Mapa
         DrawCube( halfScreenWidth, halfScreenHeight, -500, siteLength, 400, siteLength, mapColors ); // site
-        DrawCube( halfScreenWidth+siteLength/2, halfScreenHeight, -500-siteLength, 1600, 400, 800, mapColors ); // atras
-        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight, -700, 1000, 400, 800, mapColors ); // short
-
+        DrawCube( halfScreenWidth+siteLength/2, halfScreenHeight, -500-siteLength, 1600, siteLength/2, siteLength, mapColors ); // atras
+        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight, -700, 1000, 400, siteLength, mapColors ); // short
+        // Rampa
         DrawRamp(halfScreenWidth+siteLength, halfScreenHeight, -500, siteLength, 400, siteLength);
-
+        // Orillas
         DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight+200+edgeHeight/2, -315, 1000, edgeHeight, edgeHeight, mapColors ); //orilla de short frente
-
         DrawCube( halfScreenWidth, halfScreenHeight+200+edgeHeight/2, -115, siteLength, edgeHeight, edgeHeight, mapColors ); //orilla de site frente
         DrawCube( halfScreenWidth+385, halfScreenHeight+200+edgeHeight/2, -515, edgeHeight, edgeHeight, siteLength-edgeHeight, mapColors ); //orilla de site derecha
         DrawCube( halfScreenWidth-385, halfScreenHeight+200+edgeHeight/2, -230, edgeHeight, edgeHeight, 200, mapColors ); //orilla de site izquierda
-
+        // Cajas
         DrawCube( halfScreenWidth+200, halfScreenHeight+200+boxSize/2, -700, boxSize, boxSize, boxSize, boxColors ); //caja atras
         DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220, boxSize, boxSize, boxSize, boxColors ); //stack de cajas (abajo)
         DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize*1.5, -220, boxSize, boxSize, boxSize, boxColors ); //stack de cajas (arriba)
         DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220-boxSize, boxSize, boxSize, boxSize, boxColors ); //caja a un ladito
+        // Paredes
+        DrawWall( halfScreenWidth+siteLength/2, halfScreenHeight+400, -500-siteLength*1.5, 1600, 400, 'z' ); // atras
+        DrawWall( halfScreenWidth+siteLength/2-siteLength, halfScreenHeight+400, -600-siteLength, siteLength-200, 400, 'x' ); // atras
+        DrawWall( halfScreenWidth-siteLength-100, halfScreenHeight+400, -700-siteLength*0.5, 1000, 400, 'z' ); // atras izquierda (short)
         
         glPopMatrix();
+
+        //caja en la rampa tiene una rotacion especial
+        glPushMatrix();
+        glTranslatef( halfScreenWidth, halfScreenHeight, -500 ); // Coloca el cubo al centro de la pantalla
+        glTranslated(translationX, 0, translationZ); // Mueve el cubo con las variables de las teclas (Vector de Traslación
+        glRotatef( rotationX, 1, 0, 0 ); // Rotar el cubo en X
+        glRotatef( rotationY, 0, 1, 0 ); // Rotar el cubo en Y
+        glRotatef( 27, 1, 0, 0 ); // ROTAR EN X PARA ALINEAR ON LA RAMPA
+        glScalef(scaleFactor, scaleFactor, scaleFactor);
+        glTranslatef( -halfScreenWidth, -halfScreenHeight, 500 );
+        DrawCube( halfScreenWidth+siteLength/2+75, halfScreenHeight+boxSize/2, -220-boxSize, boxSize, boxSize, boxSize, boxColors );
+        glPopMatrix();
+        
         glfwSwapBuffers( window );
         glfwPollEvents( );
     }
@@ -346,7 +360,7 @@ void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
 
     GLfloat colors[] =
     {
-        0, 0, 0,   0, 0, 1,   0, 1, 1,   0, 1, 0,
+        0.91, 0.59, 0.31,   0.91, 0.59, 0.31,   0.18, 0.09, 0.0,   0.18, 0.09, 0.0,
     };
     
     glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
