@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cstdlib>
+#include <time.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -13,12 +14,21 @@ void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
 void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length);
 void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, char plane);
 
+// Velocidades de translacion, rotacion y escalado
+const GLfloat rotationSpeed = 2;
+const GLfloat translationSpeed = 10;
+const GLfloat scaleSpeed = 0.02;
+
 GLfloat rotationX = 20.0f;
 GLfloat rotationY = -30.0f;
 GLfloat translationX = 0.0f;
 GLfloat translationZ = 0.0f;
-GLfloat scaleFactor = 0.8f;
+GLfloat scaleFactor = 0.6f;
 
+float prev_time = clock();
+float new_time, delta;
+
+// Color tan/café para paredes y pisos
 GLfloat mapColors[] =
 {
     0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.0, 0.0, 0.0,   0.18, 0.09, 0.0,
@@ -29,6 +39,7 @@ GLfloat mapColors[] =
     0, 0, 0,   0, 0, 0,   0, 0, 0,   0, 0, 0
 };
 
+// Color gris verdoso para cajas
 GLfloat boxColors[] =
 {
     0.51, 0.6, 0.51,   0.51, 0.6, 0.51,   0.0, 0.0, 0.0,   0.11, 0.15, 0.11,
@@ -39,6 +50,7 @@ GLfloat boxColors[] =
     0, 0, 0,   0, 0, 0,   0, 0, 0,   0, 0, 0
 };
 
+// ---------- MAIN -----------
 int main( void )
 {
     GLFWwindow *window;
@@ -51,6 +63,7 @@ int main( void )
 
     // Crear la ventana
     window = glfwCreateWindow( SCREEN_WIDTH, SCREEN_HEIGHT, "Dust2 A Site", NULL, NULL );
+    printf("Para mover la escena: WASD\nRotación: Flechas\nZoom in-out: ZX\n");
 
     // Declarar que se recibirán comando del teclado
     glfwSetKeyCallback( window, keyCallback );
@@ -70,47 +83,47 @@ int main( void )
     
     glViewport( 0.0f, 0.0f, screenWidth, screenHeight ); // Específica en que parte de la ventana se dibujaran los elementos
     glMatrixMode(GL_PROJECTION_MATRIX); // Se crea la matriz de proyección
-    glLoadIdentity( ); // Se crea de la matriz identidad
-    glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, -2000, 2000 ); // Establecer el sistema de coordenadas
+    glLoadIdentity( ); 
+
+    // Establecer el sistema de coordenadas, -2000 para poder hacer bastante zoom
+    // Preferiria que fuera glFulcrum() pero no lo pude hacer funcionar
+    glOrtho( 0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, -2000, 2000 ); 
     glMatrixMode(GL_MODELVIEW_MATRIX); // Matriz de transformación
-    
 
     // Se establece el sistema de coordenadas dentro de la ventana
     GLfloat halfScreenWidth = SCREEN_WIDTH / 2;
     GLfloat halfScreenHeight = SCREEN_HEIGHT / 2 - 100;
     GLfloat startingZPos = -500;
-    
-    
+
     // Loop en donde se estará dibujando la ventana
     while ( !glfwWindowShouldClose( window ) )
     {
         glClearColor(1, 1, 1, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Render (Se crea el cubo y se generan los cambios en los vectores de transformación)
-        glPushMatrix();
-        glTranslatef( halfScreenWidth, halfScreenHeight, -500 ); // Coloca el cubo al centro de la pantalla
-        glTranslated(translationX, 0, translationZ); // Mueve el cubo con las variables de las teclas (Vector de Traslación
+        glPushMatrix(); // push matrix para todo lo que esta ortogonal al piso
+        glTranslatef( halfScreenWidth, halfScreenHeight, -500 ); // se envia todo a (0, 0, 0)
+        glTranslatef(translationX, translationZ, 0); // traslaciones adecuadas
         glRotatef( rotationX, 1, 0, 0 ); // Rotar el cubo en X
         glRotatef( rotationY, 0, 1, 0 ); // Rotar el cubo en Y
-        glScalef(scaleFactor, scaleFactor, scaleFactor);
+        glScalef(scaleFactor, scaleFactor, scaleFactor); // escalado en todas las dimensiones
         glTranslatef( -halfScreenWidth, -halfScreenHeight, 500 );
 
-        //tamaños
+        //tamaños utiles
         GLfloat boxSize = 175;
         GLfloat edgeHeight = 30;
         GLfloat siteLength = 800;
-        // Mapa
-        DrawCube( halfScreenWidth, halfScreenHeight, -500, siteLength, 400, siteLength, mapColors ); // site
-        DrawCube( halfScreenWidth+siteLength/2, halfScreenHeight, -500-siteLength, 1600, siteLength/2, siteLength, mapColors ); // atras
-        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight, -700, 1000, 400, siteLength, mapColors ); // short
+        // Pisos, plataformas, etc.
+        DrawCube( halfScreenWidth, halfScreenHeight, -500, siteLength, 400, siteLength, mapColors ); // bombsite
+        DrawCube( halfScreenWidth+siteLength/2, halfScreenHeight, -500-siteLength, 1600, siteLength/2, siteLength, mapColors ); // atras (goose)
+        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight, -700, 1000, 400, siteLength, mapColors ); // izquierda (short)
         // Rampa
         DrawRamp(halfScreenWidth+siteLength, halfScreenHeight, -500, siteLength, 400, siteLength);
         // Orillas
-        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight+200+edgeHeight/2, -315, 1000, edgeHeight, edgeHeight, mapColors ); //orilla de short frente
-        DrawCube( halfScreenWidth, halfScreenHeight+200+edgeHeight/2, -115, siteLength, edgeHeight, edgeHeight, mapColors ); //orilla de site frente
-        DrawCube( halfScreenWidth+385, halfScreenHeight+200+edgeHeight/2, -515, edgeHeight, edgeHeight, siteLength-edgeHeight, mapColors ); //orilla de site derecha
-        DrawCube( halfScreenWidth-385, halfScreenHeight+200+edgeHeight/2, -230, edgeHeight, edgeHeight, 200, mapColors ); //orilla de site izquierda
+        DrawCube( halfScreenWidth-siteLength-100, halfScreenHeight+200+edgeHeight/2, -315, 1000, edgeHeight, edgeHeight, mapColors ); //orilla frente short
+        DrawCube( halfScreenWidth, halfScreenHeight+200+edgeHeight/2, -115, siteLength, edgeHeight, edgeHeight, mapColors ); //orilla frente site
+        DrawCube( halfScreenWidth+385, halfScreenHeight+200+edgeHeight/2, -515, edgeHeight, edgeHeight, siteLength-edgeHeight, mapColors ); //orilla derecha site, por rampa
+        DrawCube( halfScreenWidth-385, halfScreenHeight+200+edgeHeight/2, -230, edgeHeight, edgeHeight, 200, mapColors ); //orilla izquierda site
         // Cajas
         DrawCube( halfScreenWidth+200, halfScreenHeight+200+boxSize/2, -700, boxSize, boxSize, boxSize, boxColors ); //caja atras
         DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220, boxSize, boxSize, boxSize, boxColors ); //stack de cajas (abajo)
@@ -118,18 +131,20 @@ int main( void )
         DrawCube( halfScreenWidth-250, halfScreenHeight+200+boxSize/2, -220-boxSize, boxSize, boxSize, boxSize, boxColors ); //caja a un ladito
         // Paredes
         DrawWall( halfScreenWidth+siteLength/2, halfScreenHeight+400, -500-siteLength*1.5, 1600, 400, 'z' ); // atras
-        DrawWall( halfScreenWidth+siteLength/2-siteLength, halfScreenHeight+400, -600-siteLength, siteLength-200, 400, 'x' ); // atras
+        DrawWall( halfScreenWidth+siteLength/2-siteLength, halfScreenHeight+400, -600-siteLength, siteLength-200, 400, 'x' ); // izquierda
         DrawWall( halfScreenWidth-siteLength-100, halfScreenHeight+400, -700-siteLength*0.5, 1000, 400, 'z' ); // atras izquierda (short)
-        
+        //DrawWall( halfScreenWidth+siteLength*1.5+1, halfScreenHeight+200, -900, 1600, 800, 'x' ); // pared rampa (derecha) se ve raro
         glPopMatrix();
 
-        //caja en la rampa tiene una rotacion especial
+        //caja en la rampa tiene una rotacion especial, igual se le aplican las traslaciones de las teclas etc
         glPushMatrix();
         glTranslatef( halfScreenWidth, halfScreenHeight, -500 ); // Coloca el cubo al centro de la pantalla
-        glTranslated(translationX, 0, translationZ); // Mueve el cubo con las variables de las teclas (Vector de Traslación
+        glTranslated(translationX, translationZ, 0); // Mueve el cubo con las variables de las teclas (Vector de Traslación
         glRotatef( rotationX, 1, 0, 0 ); // Rotar el cubo en X
         glRotatef( rotationY, 0, 1, 0 ); // Rotar el cubo en Y
+
         glRotatef( 27, 1, 0, 0 ); // ROTAR EN X PARA ALINEAR ON LA RAMPA
+
         glScalef(scaleFactor, scaleFactor, scaleFactor);
         glTranslatef( -halfScreenWidth, -halfScreenHeight, 500 );
         DrawCube( halfScreenWidth+siteLength/2+75, halfScreenHeight+boxSize/2, -220-boxSize, boxSize, boxSize, boxSize, boxColors );
@@ -137,6 +152,14 @@ int main( void )
         
         glfwSwapBuffers( window );
         glfwPollEvents( );
+
+        // Animacion para rotar el escenario
+        new_time = clock();
+        delta = new_time - prev_time;
+        if (delta > 500) { // cada medio segundo si no me equivoco
+            prev_time = new_time;
+            rotationY -= 0.5;
+        }
     }
 
     glfwTerminate( );
@@ -144,51 +167,7 @@ int main( void )
     return 0;
 }
 
-
-// LLamar mandar las teclas
-void keyCallback( GLFWwindow *window, int key, int scancode, int action, int mods )
-{
-    const GLfloat rotationSpeed = 10;
-    // Switch en donde se determinan los movimientos del cubo en base a las teclas
-    if ( action == GLFW_PRESS || action == GLFW_REPEAT )
-    {
-        switch ( key )
-        {
-            case GLFW_KEY_UP:
-                rotationX -= rotationSpeed;
-                break;
-            case GLFW_KEY_DOWN:
-                rotationX += rotationSpeed;
-                break;
-            case GLFW_KEY_RIGHT:
-                rotationY += rotationSpeed;
-                break;
-            case GLFW_KEY_LEFT:
-                rotationY -= rotationSpeed;
-                break;
-            case GLFW_KEY_A:
-                translationX -= 10;
-                break;
-            case GLFW_KEY_D:
-                translationX += 10;
-                break;
-            case GLFW_KEY_W:
-                translationZ += 10;
-                break;
-            case GLFW_KEY_S:
-                translationZ -=10;
-                break;
-            case GLFW_KEY_X:
-                scaleFactor += 0.1;
-                break;
-            case GLFW_KEY_Z:
-                scaleFactor -= 0.1;
-                break;
-        }
-    }
-}
-
-
+// Dibuja un poligono de 6 lados, para los pisos y las cajas, se le envia un apuntador a matriz de colores
 void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length, GLfloat colors[])
 {
     GLfloat xOffset = width * 0.5f;
@@ -234,40 +213,18 @@ void DrawCube( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
         centerPosX + xOffset, centerPosY - yOffset, centerPosZ + zOffset  // Abajo Izquierda
     };
 
-    /*
-    GLfloat colors[] =
-    {
-        0, 0, 0,   0, 0, 1,   0, 1, 1,   0, 1, 0,
-        1, 0, 0,   1, 0, 1,   1, 1, 1,   1, 1, 0,
-        0, 0, 0,   0, 0, 1,   1, 0, 1,   1, 0, 0,
-        0, 1, 0,   0, 1, 1,   1, 1, 1,   1, 1, 0,
-        0, 0, 0,   0, 1, 0,   1, 1, 0,   1, 0, 0,
-        0, 0, 1,   0, 1, 1,   1, 1, 1,   1, 0, 1
-    };
-    */
-   /*
-    GLfloat colors[] =
-    {
-        0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.0, 0.0, 0.0,   0.18, 0.09, 0.0,
-        0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.18, 0.09, 0.0,
-        0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.18, 0.09, 0.0,
-        0.71, 0.39, 0.11,   0.71, 0.39, 0.11,   0.18, 0.09, 0.0,   0.0, 0.00, 0.0,
-        0.71, 0.39, 0.11,   0.81, 0.59, 0.31,   0.71, 0.39, 0.11,   0.71, 0.39, 0.11,
-        0, 0, 0,   0, 0, 0,   0, 0, 0,   0, 0, 0
-    };
-    */
-    
     glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
     glDepthMask(GL_TRUE);//Agregar la proyección de profundidad
     glEnableClientState( GL_VERTEX_ARRAY );
     glEnableClientState(GL_COLOR_ARRAY);
     glVertexPointer( 3, GL_FLOAT, 0, vertices );
     glColorPointer(3, GL_FLOAT, 0, colors); //Buffer de color
-    glDrawArrays( GL_QUADS, 0, 24 );
+    glDrawArrays( GL_QUADS, 0, 24 ); // 24 vertices de cuadrados
     glDisableClientState( GL_VERTEX_ARRAY );
     glDisableClientState(GL_COLOR_ARRAY);
 }
 
+// dibuja la rampa, solo se llama 1 vez en el loop
 void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, GLfloat length)
 {
     GLfloat xOffset = width * 0.5f;
@@ -325,20 +282,22 @@ void DrawRamp( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
     glEnableClientState(GL_COLOR_ARRAY);
     glVertexPointer( 3, GL_FLOAT, 0, quads );
     glColorPointer(3, GL_FLOAT, 0, quadColors ); //Buffer de color
-    glDrawArrays( GL_QUADS, 0, 12 );
+    glDrawArrays( GL_QUADS, 0, 12 );            // 12 vertices de caras cuadradas
     glVertexPointer( 3, GL_FLOAT, 0, leftSide );
     glColorPointer(3, GL_FLOAT, 0, triangleColors ); //Buffer de color
-    glDrawArrays( GL_TRIANGLES, 0, 6 );
+    glDrawArrays( GL_TRIANGLES, 0, 6 );         // 6 vertices de los triangulos a los lados
     glDisableClientState( GL_VERTEX_ARRAY );
     glDisableClientState(GL_COLOR_ARRAY);
 }
 
+// Dibuja paredes atras y a los lados, puede dibujarlas en cualquier plano
 void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLfloat width, GLfloat height, char plane)
 {
     GLfloat wOffset = width * 0.5f;
     GLfloat hOffset = height * 0.5f;
-    GLfloat wall[12];
 
+    //Calcula los 4 (12 coordenadas total) y hace un plano en la cara requerida
+    GLfloat wall[12];
     if (plane == 'x') {
         wall[0] = centerPosX; wall[1] = centerPosY + hOffset; wall[2] = centerPosZ - wOffset;
         wall[3] = centerPosX; wall[4] = centerPosY + hOffset; wall[5] = centerPosZ + wOffset;
@@ -363,13 +322,55 @@ void DrawWall( GLfloat centerPosX, GLfloat centerPosY, GLfloat centerPosZ, GLflo
         0.91, 0.59, 0.31,   0.91, 0.59, 0.31,   0.18, 0.09, 0.0,   0.18, 0.09, 0.0,
     };
     
-    glEnable(GL_DEPTH_TEST); //Agregar la proyección de profundidad
-    glDepthMask(GL_TRUE);//Agregar la proyección de profundidad
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
     glEnableClientState( GL_VERTEX_ARRAY );
     glEnableClientState(GL_COLOR_ARRAY);
     glVertexPointer( 3, GL_FLOAT, 0, wall );
-    glColorPointer(3, GL_FLOAT, 0, colors); //Buffer de color
-    glDrawArrays( GL_QUADS, 0, 4 );
+    glColorPointer(3, GL_FLOAT, 0, colors);
+    glDrawArrays( GL_QUADS, 0, 4 );         // dibuja los 4 vertices de la cara
     glDisableClientState( GL_VERTEX_ARRAY );
     glDisableClientState(GL_COLOR_ARRAY);
+}
+
+// LLamar mandar las teclas
+void keyCallback( GLFWwindow *window, int key, int scancode, int action, int mods )
+{
+    // Switch en donde se determinan los movimientos del cubo en base a las teclas
+    if ( action == GLFW_PRESS || action == GLFW_REPEAT )
+    {
+        switch ( key )
+        {
+            case GLFW_KEY_UP:
+                rotationX -= rotationSpeed;
+                break;
+            case GLFW_KEY_DOWN:
+                rotationX += rotationSpeed;
+                break;
+            case GLFW_KEY_RIGHT:
+                rotationY += rotationSpeed;
+                break;
+            case GLFW_KEY_LEFT:
+                rotationY -= rotationSpeed;
+                break;
+            case GLFW_KEY_A:
+                translationX -= translationSpeed;
+                break;
+            case GLFW_KEY_D:
+                translationX += translationSpeed;
+                break;
+            case GLFW_KEY_W:
+                translationZ += translationSpeed;
+                break;
+            case GLFW_KEY_S:
+                translationZ -= translationSpeed;
+                break;
+            case GLFW_KEY_X:
+                scaleFactor += scaleSpeed;
+                break;
+            case GLFW_KEY_Z:
+                scaleFactor -= scaleSpeed;
+                break;
+        }
+    }
 }
